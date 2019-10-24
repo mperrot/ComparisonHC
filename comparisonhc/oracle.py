@@ -294,6 +294,8 @@ class OracleActive(Oracle):
         n_examples = x.shape[0]
         
         self.metric = metric
+
+        self.similarities = None
         
         super(OracleActive,self).__init__(n_examples,seed)
 
@@ -304,7 +306,7 @@ class OracleActive(Oracle):
         if self.similarities is None:
             self.similarities = self.metric(self.x,self.x)
 
-        comparisons_array = (similarities > similarities[k,l])*1 - (similarities < similarities[k,l])*1
+        comparisons_array = (self.similarities > self.similarities[k,l])*1 - (self.similarities < self.similarities[k,l])*1
                     
         return comparisons_array
     
@@ -312,7 +314,7 @@ class OracleActive(Oracle):
         if self.similarities is None:
             self.similarities = self.metric(self.x,self.x)
 
-        comparisons_array = (similarities[i,j] > similarities[k,l])*1 - (similarities[i,j] < similarities[k,l])*1
+        comparisons_array = (self.similarities[i,j] > self.similarities[k,l])*1 - (self.similarities[i,j] < self.similarities[k,l])*1
                     
         return comparisons_array
     
@@ -420,9 +422,9 @@ class OracleActiveBudget(OracleActive):
             k,l = l,k
 
         if (k,l) in self.references:
-            comparisons_array = (similarities > similarities[k,l])*1 - (similarities < similarities[k,l])*1
+            comparisons_array = (self.similarities > self.similarities[k,l])*1 - (self.similarities < self.similarities[k,l])*1
         elif self.budget > len(self.references):
-            comparisons_array = (similarities > similarities[k,l])*1 - (similarities < similarities[k,l])*1
+            comparisons_array = (self.similarities > self.similarities[k,l])*1 - (self.similarities < self.similarities[k,l])*1
             self.references.append((k,l))
         else:
             comparisons_array = None

@@ -203,7 +203,7 @@ class ComparisonHC:
         else:
             return None
 
-    def average_ARI(self,dendrogram_truth,max_level):
+    def average_ARI(self,max_level,dendrogram_truth,clusters_truth=None):
         """Computes the score of the learned dendrogram in terms of Average
         Adjusted Rand Index as described in the main paper and
         compared to the ground truth dendrogram. The higher the score
@@ -217,13 +217,17 @@ class ComparisonHC:
 
         Parameters
         ----------
-        dendrogram_truth : numpy array, shape (n_clusters-1, 3)
-            The true dendrogram for the clusters provided to the fit
-            method.
-
         max_level : int
             The number of levels to consider.
-        
+
+        dendrogram_truth : numpy array, shape (n_clusters-1, 3)
+            The true dendrogram for the data.
+
+        clusters_truth : list of (list of examples)
+            The initial clusters used to generate dendrogram_truth. If
+            None, the same initial clusters than fit are
+            used. (Default: None).
+
         Returns
         -------
         score : float
@@ -238,13 +242,16 @@ class ComparisonHC:
         """
         if self.dendrogram is None:
             raise RuntimeError("No dendrogram, the fit method should be called first.")
+
+        if clusters_truth is None:
+            clusters_truth = self.clusters
         
         score = 0
         for level in range(1,max_level+1):
-            k_clusters_truth = self._get_k_clusters(dendrogram_truh,2**level)
-            k_clusters = self._get_k_clusters(self.dendrogram,2**level)
+            k_clusters_truth = self._get_k_clusters(dendrogram_truth,clusters_truth,2**level)
+            k_clusters = self._get_k_clusters(self.dendrogram,self.clusters,2**level)
             
-            k_clusters_truh_labels = np.zeros((self.n_examples,))
+            k_clusters_truth_labels = np.zeros((self.n_examples,))
             for cluster_index,cluster in enumerate(k_clusters_truth):
                 k_clusters_truth_labels[np.array(cluster,dtype=int)] = cluster_index
                 
@@ -252,11 +259,11 @@ class ComparisonHC:
             for cluster_index,cluster in enumerate(k_clusters):
                 k_clusters_labels[np.array(cluster,dtype=int)] = cluster_index
             
-            score += adjusted_rand_score(k_clusters_labels_truth,c_clusters_labels)
+            score += adjusted_rand_score(k_clusters_truth_labels,k_clusters_labels)
             
         return score/max_level
 
-    def _get_k_clusters(self,dendrogram,k):
+    def _get_k_clusters(self,dendrogram,clusters,k):
         """Cuts a dendrogram of the initial clusters to obtain a partition of
         the space in exactly k clusters.
 
@@ -265,6 +272,13 @@ class ComparisonHC:
 
         Parameters
         ----------
+        dendrogram : numpy array, shape (n_clusters-1, 3)
+            The dendrogram that should be used to obtain the
+            partition.
+
+        clusters : list of (list of examples)
+            The initial clusters of the dendrogram.
+
         k : int
             The number of clusters in the partition.
 
@@ -274,19 +288,20 @@ class ComparisonHC:
             The k_clusters that are merged last in the dendrogram.
 
         """
-        if k >= self.n_clusters:
-            return self.clusters
+        n_clusters = len(clusters)
+        if k >= n_clusters:
+            return clusters
 
         if k < 2:
-            return [[example_i for cluster in self.clusters for example_i in cluster]]
+            return [[example_i for cluster in clusters for example_i in cluster]]
 
-        k_clusters = [[example_i for example_i in cluster] for cluster in self.clusters]
+        k_clusters = [[example_i for example_i in cluster] for cluster in clusters]
 
-        clusters_indices = list(range(self.n_clusters))
+        clusters_indices = list(range(n_clusters))
         
-        for it in range(self.n_clusters-k):
-            i = cluster_indices.index(dendrogram[it,0])
-            j = cluster_indices.index(dendrogram[it,1])
+        for it in range(n_clusters-k):
+            i = clusters_indices.index(dendrogram[it,0])
+            j = clusters_indices.index(dendrogram[it,1])
 
             if i > j:
                 i,j = j,i
@@ -294,7 +309,7 @@ class ComparisonHC:
             k_clusters[i].extend(k_clusters[j])
             del k_clusters[j]
 
-            clusters_indices[i] = self.n_clusters+it
+            clusters_indices[i] = n_clusters+it
             del clusters_indices[j]
             
         return k_clusters
