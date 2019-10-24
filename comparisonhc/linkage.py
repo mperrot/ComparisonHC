@@ -385,7 +385,7 @@ class OrdinalLinkageSingle(OrdinalLinkage):
                 and callable(getattr(oracle,"comparisons_single"))):
             raise ValueError("Incompatible oracle, callable 'comparisons_single' missing.")
 
-        super(OridnalLinkageSingle,self).__init__(oracle)
+        super(OrdinalLinkageSingle,self).__init__(oracle)
 
     def closest_clusters(self,clusters):
         """Returns the indices of the two clusters that are closest to each
@@ -411,7 +411,7 @@ class OrdinalLinkageSingle(OrdinalLinkage):
         
         n_clusters = len(clusters)
 
-        i,j = None,None
+        i,j = 0,1
 
         for p in range(n_clusters):
             for q in range(p+1,n_clusters):
@@ -517,7 +517,7 @@ class OrdinalLinkageComplete(OrdinalLinkage):
                 and callable(getattr(oracle,"comparisons_single"))):
             raise ValueError("Incompatible oracle, callable 'comparisons_single' missing.")
 
-        super(OridnalLinkageComplete,self).__init__(oracle)
+        super(OrdinalLinkageComplete,self).__init__(oracle)
 
     def closest_clusters(self,clusters):
         """Returns the indices of the two clusters that are closest to each
@@ -543,7 +543,7 @@ class OrdinalLinkageComplete(OrdinalLinkage):
         
         n_clusters = len(clusters)
 
-        i,j = None,None
+        i,j = 0,1
 
         for p in range(n_clusters):
             for q in range(p+1,n_clusters):
