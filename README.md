@@ -26,6 +26,7 @@ python setup.py install
 ## Examples
 
 Examples on how to use this package are provided below:
-- [Hierarchical clustering on the Planted model.](https://github.com/mperrot/ComparisonHC/blob/master/examples/plantes.ipynb)
-- [Hierarchical clustering on the Zoo dataset.](https://github.com/mperrot/ComparisonHC/blob/master/examples/zoo.ipynb)
-- [Hierarchical clustering on the Car dataset.](https://github.com/mperrot/ComparisonHC/blob/master/examples/car.ipynb)
+- [Hierarchical clustering on the Planted model with 4K-AL.](https://github.com/mperrot/ComparisonHC/blob/master/examples/planted.ipynb)
+- [Hierarchical clustering on the Planted model with SL.](https://github.com/mperrot/ComparisonHC/blob/master/examples/planted_single.ipynb)
+- [Hierarchical clustering on the Zoo dataset with 4-AL.](https://github.com/mperrot/ComparisonHC/blob/master/examples/zoo.ipynb)
+- [Hierarchical clustering on the Car dataset with 4-AL.](https://github.com/mperrot/ComparisonHC/blob/master/examples/car.ipynb)
