@@ -19,6 +19,9 @@ class OrdinalLinkage(metaclass=ABCMeta):
     oracle : Oracle object
         The oracle used to query the quadruplets.
 
+    n_examples : int
+        The number of examples handled by the linkage.
+
     time_elapsed : float
         The total time taken by the linkage to determine the closest
         clusters in a list of clusters. It includes the time taken by
@@ -33,11 +36,13 @@ class OrdinalLinkage(metaclass=ABCMeta):
     """
     def __init__(self,oracle):
         self.oracle = oracle
+
+        self.n_examples = self.oracle.n_examples
         
         self.time_elapsed = 0
                         
     @abstractmethod
-    def closest_clusters(clusters):
+    def closest_clusters(self,clusters):
         """Returns the indices of the two clusters that are closest to each
         other in the list.
 
@@ -76,6 +81,9 @@ class OrdinalLinkageKernel(OrdinalLinkage):
     ----------
     oracle : Oracle object
         The oracle used to query the quadruplets.
+
+    n_examples : int
+        The number of examples handled by the linkage.
 
     kernel : numpy array, shape (n_examples,n_examples)
         A nummpy array of similarities between the
@@ -120,7 +128,7 @@ class OrdinalLinkageKernel(OrdinalLinkage):
         
         super(OrdinalLinkageKernel,self).__init__(oracle)
 
-    def closest_clusters(clusters):
+    def closest_clusters(self,clusters):
         """Returns the indices of the two clusters that are closest to each
         other in the list.
 
@@ -185,9 +193,9 @@ class OrdinalLinkageKernel(OrdinalLinkage):
         deterministic.
 
         """
-        kernel = np.zeros((self.oracle.n_examples,self.oracle.n_examples))
+        kernel = np.zeros((self.n_examples,self.n_examples))
 
-        combs = list(itertools.combinations(range(self.oracle.n_examples),2))
+        combs = list(itertools.combinations(range(self.n_examples),2))
         random.shuffle(combs)
         
         for k,l in combs:
@@ -197,7 +205,7 @@ class OrdinalLinkageKernel(OrdinalLinkage):
             if comparisons is None:
                 break
             
-            for i in range(self.oracle.n_examples):
+            for i in range(self.n_examples):
                 kernel[i,i+1:] += (comparisons[i+1:,:].astype(int)
                                    @ comparisons[i,:].astype(int))
                 
@@ -221,6 +229,9 @@ class OrdinalLinkageAverage(OrdinalLinkage):
     ----------
     oracle : Oracle object
         The oracle used to query the quadruplets.
+
+    n_examples : int
+        The number of examples handled by the linkage.
 
     time_elapsed : float
         The total time taken by the linkage to determine the closest
@@ -257,7 +268,7 @@ class OrdinalLinkageAverage(OrdinalLinkage):
 
         super(OrdinalLinkageAverage,self).__init__(oracle)
 
-    def closest_clusters(clusters):
+    def closest_clusters(self,clusters):
         """Returns the indices of the two clusters that are closest to each
         other in the list.
 
@@ -290,10 +301,10 @@ class OrdinalLinkageAverage(OrdinalLinkage):
         # Prepare the normalization array
         # This is the divisor for each entry in the sum.
         # It depends on the cluster of each example.
-        normalization = np.zeros((1,1,self.oracle.n_examples,self.oracle.n_examples))
+        normalization = np.zeros((1,1,self.n_examples,self.n_examples))
         for r in range(n_clusters):
             normalization[0,0,[np.array(clusters[r]).reshape(-1,1)],
-                          np.isin(np.arange(n),clusters[r],invert=True)] = 1/len(clusters[r])
+                          np.isin(np.arange(self.n_examples),clusters[r],invert=True)] = 1/len(clusters[r])
             
         for s in range(n_clusters):
             normalization[0,0,:,clusters[s]] /= len(clusters[s])
@@ -343,6 +354,9 @@ class OrdinalLinkageSingle(OrdinalLinkage):
     oracle : Oracle object
         The oracle used to query the quadruplets.
 
+    n_examples : int
+        The number of examples handled by the linkage.
+
     time_elapsed : float
         The total time taken by the linkage to determine the closest
         clusters in a list of clusters. It includes the time taken by
@@ -373,7 +387,7 @@ class OrdinalLinkageSingle(OrdinalLinkage):
 
         super(OridnalLinkageSingle,self).__init__(oracle)
 
-    def closest_clusters(clusters):
+    def closest_clusters(self,clusters):
         """Returns the indices of the two clusters that are closest to each
         other in the list.
 
@@ -409,7 +423,7 @@ class OrdinalLinkageSingle(OrdinalLinkage):
         
         return  i,j
 
-    def _is_closer(cluster_p,cluster_q,cluster_i,cluster_j):
+    def _is_closer(self,cluster_p,cluster_q,cluster_i,cluster_j):
         """Returns a Boolean indicating whether the clusters cluster_p and
         cluster_q are closer to each other than the clusters cluster_i
         and cluster_j.
@@ -472,6 +486,9 @@ class OrdinalLinkageComplete(OrdinalLinkage):
     oracle : Oracle object
         The oracle used to query the quadruplets.
 
+    n_examples : int
+        The number of examples handled by the linkage.
+
     time_elapsed : float
         The total time taken by the linkage to determine the closest
         clusters in a list of clusters. It includes the time taken by
@@ -502,7 +519,7 @@ class OrdinalLinkageComplete(OrdinalLinkage):
 
         super(OridnalLinkageComplete,self).__init__(oracle)
 
-    def closest_clusters(clusters):
+    def closest_clusters(self,clusters):
         """Returns the indices of the two clusters that are closest to each
         other in the list.
 
@@ -538,7 +555,7 @@ class OrdinalLinkageComplete(OrdinalLinkage):
         
         return  i,j
 
-    def _is_closer(cluster_p,cluster_q,cluster_i,cluster_j):
+    def _is_closer(self,cluster_p,cluster_q,cluster_i,cluster_j):
         """Returns a Boolean indicating whether the clusters cluster_p and
         cluster_q are closer to each other than the clusters cluster_i
         and cluster_j.

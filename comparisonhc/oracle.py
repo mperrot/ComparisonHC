@@ -41,7 +41,7 @@ class Oracle(metaclass=ABCMeta):
 
         Returns
         -------
-        comparisons : numpy array, shape (n_examples, n_examples, n_examples, n_examples)
+        comparisons_array : numpy array, shape (n_examples, n_examples, n_examples, n_examples)
             A reference to a numpy array of shape (n_examples,
             n_examples, n_examples, n_examples) containing values in
             {1,-1,0}. In entry (i,j,k,l), the value 1 indicates that
@@ -60,7 +60,7 @@ class Oracle(metaclass=ABCMeta):
 
         Returns
         -------
-        comparisons : numpy array, shape (n_examples, n_examples)
+        comparisons_array : numpy array, shape (n_examples, n_examples)
             A reference to a numpy array of shape (n_examples,
             n_examples) containing values in {1,-1,0}. In entry (i,j),
             the value 1 indicates that the quadruplet (i,j,k,l) is
@@ -78,7 +78,7 @@ class Oracle(metaclass=ABCMeta):
 
         Returns
         -------
-        comparisons : int8
+        comparisons_array : int8
             A int8 in {1,-1,0}. The value 1 indicates that the
             quadruplet (i,j,k,l) is available, the value -1 indicates
             that the quadruplet (k,l,i,j) is available, and the value
@@ -125,7 +125,7 @@ class OraclePassive(Oracle):
     n_examples : int
         The number of examples.
 
-    comparisons : numpy array, shape (n_examples, n_examples, n_examples, n_examples)
+    comparisons_array : numpy array, shape (n_examples, n_examples, n_examples, n_examples)
         A numpy array of shape (n_examples, n_examples, n_examples,
         n_examples) containing values in {1,-1,0}. In entry (i,j,k,l),
         the value 1 indicates that the quadruplet (i,j,k,l) is
@@ -145,36 +145,36 @@ class OraclePassive(Oracle):
         
         self.proportion_quadruplets = proportion_quadruplets
 
-        self.comparisons = None
+        self.comparisons_array = None
 
         n_examples = x.shape[0]
         super(OraclePassive,self).__init__(n_examples,seed)
 
     def comparisons(self):
-        if self.comparisons is None:
-            self.comparisons = self._get_comparisons()
+        if self.comparisons_array is None:
+            self.comparisons_array = self._get_comparisons()
 
-        return self.comparisons
+        return self.comparisons_array
     
-    def comparisons_to_ref(k,l):
-        if self.comparisons is None:
-            self.comparisons = self._get_comparisons()
+    def comparisons_to_ref(self,k,l):
+        if self.comparisons_array is None:
+            self.comparisons_array = self._get_comparisons()
 
-        return self.comparisons[:,:,k,l]
+        return self.comparisons_array[:,:,k,l]
     
     
-    def comparisons_single(i,j,k,l):
-        if self.comparisons is None:
-            self.comparisons = self._get_comparisons()
+    def comparisons_single(self,i,j,k,l):
+        if self.comparisons_array is None:
+            self.comparisons_array = self._get_comparisons()
 
-        return self.comparisons[i,j,k,l]
+        return self.comparisons_array[i,j,k,l]
     
     def _get_comparisons(self):
         """Returns all the quadruplets associated with the examples.
 
         Returns
         -------
-        comparisons : numpy array, shape (n_examples, n_examples, n_examples, n_examples)
+        comparisons_array : numpy array, shape (n_examples, n_examples, n_examples, n_examples)
             A reference to a numpy array of shape (n_examples,
             n_examples, n_examples, n_examples) containing values in
             {1,-1,0}. In entry (i,j,k,l), the value 1 indicates that
@@ -184,9 +184,11 @@ class OraclePassive(Oracle):
             available. This method should be deterministic.
 
         """
+        random_state = np.random.RandomState(self.seed)
+                
         similarities = self.metric(self.x,self.x)
             
-        comparisons = np.zeros((self.n_examples,self.n_examples,
+        comparisons_array = np.zeros((self.n_examples,self.n_examples,
                           self.n_examples,self.n_examples),dtype='int8')
 
         # This is to take into account the symmetry effect that makes us query each quadruplet twice
@@ -194,23 +196,23 @@ class OraclePassive(Oracle):
     
         for i in range(self.n_examples):
             for j in range(i+1,self.n_examples):
-                selector = np.triu(np.random.rand(self.n_examples,self.n_examples),1)
-                selector = (selector + selector.transpose())<prop_eff
+                selector = np.triu(random_state.rand(self.n_examples,self.n_examples),1)
+                selector = (selector + selector.transpose())<proportion_effective
 
-                comparisons[i,j,:,:] = np.where(np.logical_and(selector,similarities[i,j] > similarities),1,0) + np.where(np.logical_and(selector,similarities[i,j] < similarities),-1,0)
-                comparisons[j,i,:,:] = comparisons[i,j,:,:]
+                comparisons_array[i,j,:,:] = np.where(np.logical_and(selector,similarities[i,j] > similarities),1,0) + np.where(np.logical_and(selector,similarities[i,j] < similarities),-1,0)
+                comparisons_array[j,i,:,:] = comparisons_array[i,j,:,:]
 
-        comparisons -= comparisons.transpose()
-        comparisons = np.clip(comparisons,-1,1)
+        comparisons_array -= comparisons_array.transpose()
+        comparisons_array = np.clip(comparisons_array,-1,1)
     
-        return comparisons
+        return comparisons_array
 
 class OracleComparisons(Oracle):
     """An oracle that returns quadruplets from a precomputed numpy array.
 
     Parameters
     ----------
-    comparisons : numpy array, shape (n_examples, n_examples, n_examples, n_examples)
+    comparisons_array : numpy array, shape (n_examples, n_examples, n_examples, n_examples)
         A numpy array of shape (n_examples, n_examples, n_examples,
         n_examples) containing values in {1,-1,0}. In entry (i,j,k,l),
         the value 1 indicates that the quadruplet (i,j,k,l) is
@@ -223,7 +225,7 @@ class OracleComparisons(Oracle):
     n_examples : int
         The number of examples.
 
-    comparisons : numpy array, shape (n_examples, n_examples, n_examples, n_examples)
+    comparisons_array : numpy array, shape (n_examples, n_examples, n_examples, n_examples)
         A numpy array of shape (n_examples, n_examples, n_examples,
         n_examples) containing values in {1,-1,0}. In entry (i,j,k,l),
         the value 1 indicates that the quadruplet (i,j,k,l) is
@@ -232,21 +234,21 @@ class OracleComparisons(Oracle):
         of the quadruplets is available.
 
     """    
-    def __init__(self,comparisons):
-        self.comparisons = comparisons
+    def __init__(self,comparisons_array):
+        self.comparisons_array = comparisons_array
         
         n_examples = x.shape[0]
         super(OracleComparisons,self).__init__(n_examples)
 
     def comparisons(self):
-        return self.comparisons
+        return self.comparisons_array
     
-    def comparisons_to_ref(k,l):
-        return self.comparisons[:,:,k,l]
+    def comparisons_to_ref(self,k,l):
+        return self.comparisons_array[:,:,k,l]
     
     
-    def comparisons_single(i,j,k,l):
-        return self.comparisons[i,j,k,l]
+    def comparisons_single(self,i,j,k,l):
+        return self.comparisons_array[i,j,k,l]
     
 class OracleActive(Oracle):
     """An oracle that returns actively queried quadruplets from standard
@@ -298,23 +300,22 @@ class OracleActive(Oracle):
     def comparisons(self):
         raise NotImplemented("Querying all the quadruplets with an active oracle is prohibited.")
     
-    def comparisons_to_ref(k,l):
+    def comparisons_to_ref(self,k,l):
         if self.similarities is None:
             self.similarities = self.metric(self.x,self.x)
 
-        comparisons = (similarities > similarities[k,l])*1 - (similarities < similarities[k,l])*1
+        comparisons_array = (similarities > similarities[k,l])*1 - (similarities < similarities[k,l])*1
                     
-        return comparisons
+        return comparisons_array
     
-    def comparisons_single(i,j,k,l):
+    def comparisons_single(self,i,j,k,l):
         if self.similarities is None:
             self.similarities = self.metric(self.x,self.x)
 
-        comparisons = (similarities[i,j] > similarities[k,l])*1 - (similarities[i,j] < similarities[k,l])*1
+        comparisons_array = (similarities[i,j] > similarities[k,l])*1 - (similarities[i,j] < similarities[k,l])*1
                     
-        return comparisons
+        return comparisons_array
     
-
 
 class OracleActiveBudget(OracleActive):
     """An oracle that returns actively queried quadruplets from standard
@@ -395,13 +396,13 @@ class OracleActiveBudget(OracleActive):
 
         self.references = []
 
-    def comparisons_to_ref(k,l):
+    def comparisons_to_ref(self,k,l):
         """Returns all the quadruplets with respect to the reference of
         examples k,l.
 
         Returns
         -------
-        comparisons : numpy array, shape (n_examples, n_examples)
+        comparisons_array : numpy array, shape (n_examples, n_examples)
             A reference to a numpy array of shape (n_examples,
             n_examples) containing values in {1,-1,0}. In entry (i,j),
             the value 1 indicates that the quadruplet (i,j,k,l) is
@@ -419,14 +420,14 @@ class OracleActiveBudget(OracleActive):
             k,l = l,k
 
         if (k,l) in self.references:
-            comparisons = (similarities > similarities[k,l])*1 - (similarities < similarities[k,l])*1
+            comparisons_array = (similarities > similarities[k,l])*1 - (similarities < similarities[k,l])*1
         elif self.budget > len(self.references):
-            comparisons = (similarities > similarities[k,l])*1 - (similarities < similarities[k,l])*1
+            comparisons_array = (similarities > similarities[k,l])*1 - (similarities < similarities[k,l])*1
             self.references.append((k,l))
         else:
-            comparisons = None
+            comparisons_array = None
             
-        return comparisons
+        return comparisons_array
     
-    def comparisons_single(i,j,k,l):
+    def comparisons_single(self,i,j,k,l):
         raise NotImplemented("Querying a single quadruplet with a budgeted active oracle is prohibited.")

@@ -23,7 +23,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3"
     ],
     install_requires=[
-        "numpy>=1.15.4"
+        "numpy>=1.15.4",
+        "scikit-learn>=0.21.2"
     ],
     python_requires="~=3.5"
 )
