@@ -237,7 +237,7 @@ class OracleComparisons(Oracle):
     def __init__(self,comparisons_array):
         self.comparisons_array = comparisons_array
         
-        n_examples = x.shape[0]
+        n_examples = comparisons_array.shape[0]
         super(OracleComparisons,self).__init__(n_examples)
 
     def comparisons(self):
